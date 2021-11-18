@@ -2,7 +2,7 @@
 use crate::parser::single_token_parse_recovery::SingleTokenParseRecovery;
 use crate::parser::ParsedSyntax;
 use crate::syntax::decl::{formal_param_pat, parameter_list, parameters_list};
-use crate::syntax::expr::assign_expr;
+use crate::syntax::expr::assignment_expression_right_hand_side;
 use crate::syntax::function::{function_body, ts_parameter_types, ts_return_type};
 use crate::syntax::js_parse_error;
 use crate::syntax::object::{computed_member_name, literal_member_name};
@@ -696,7 +696,7 @@ fn optional_equals_value_clause(p: &mut Parser) -> Option<CompletedMarker> {
 		let m = p.start();
 		p.bump_any(); // eat the = token
 
-		assign_expr(p);
+		assignment_expression_right_hand_side(p);
 
 		Some(m.complete(p, JS_EQUAL_VALUE_CLAUSE))
 	} else {

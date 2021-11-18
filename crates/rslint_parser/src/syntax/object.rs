@@ -3,7 +3,9 @@ use crate::parser::single_token_parse_recovery::SingleTokenParseRecovery;
 use crate::parser::ParsedSyntax;
 use crate::parser::ParsedSyntax::{Absent, Present};
 use crate::syntax::decl::{formal_param_pat, parameter_list};
-use crate::syntax::expr::{assign_expr, expr, identifier_name, literal_expression};
+use crate::syntax::expr::{
+	assignment_expression_right_hand_side, expr, identifier_name, literal_expression,
+};
 use crate::syntax::function::{function_body, ts_parameter_types, ts_return_type};
 use crate::syntax::js_parse_error;
 use crate::{CompletedMarker, ParseRecovery, Parser, ParserState, TokenSet};
@@ -101,7 +103,7 @@ fn object_member(p: &mut Parser) -> ParsedSyntax {
 		T![...] => {
 			let m = p.start();
 			p.bump_any();
-			assign_expr(p);
+			assignment_expression_right_hand_side(p);
 			Present(m.complete(p, JS_SPREAD))
 		}
 
@@ -136,7 +138,7 @@ fn object_member(p: &mut Parser) -> ParsedSyntax {
 				// let b = { foo = 4, foo = bar }
 				if p.eat(T![=]) {
 					member_name.change_kind(p, NAME);
-					assign_expr(p);
+					assignment_expression_right_hand_side(p);
 					return Present(m.complete(p, INITIALIZED_PROP));
 				}
 
@@ -151,7 +153,7 @@ fn object_member(p: &mut Parser) -> ParsedSyntax {
 					// let b = { a: true }
 					// If the member name was a literal OR we're at a colon
 					p.expect_required(T![:]);
-					assign_expr(p);
+					assignment_expression_right_hand_side(p);
 					Present(m.complete(p, JS_PROPERTY_OBJECT_MEMBER))
 				}
 			} else {
@@ -165,7 +167,7 @@ fn object_member(p: &mut Parser) -> ParsedSyntax {
 				SingleTokenParseRecovery::new(token_set![T![:], T![,]], ERROR).recover(p);
 
 				if p.eat(T![:]) {
-					assign_expr(p);
+					assignment_expression_right_hand_side(p);
 					Present(m.complete(p, JS_PROPERTY_OBJECT_MEMBER))
 				} else {
 					// It turns out that this isn't a valid member after all. Make sure to throw
