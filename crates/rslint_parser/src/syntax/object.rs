@@ -3,7 +3,7 @@ use crate::parser::single_token_parse_recovery::SingleTokenParseRecovery;
 use crate::parser::ParsedSyntax;
 use crate::parser::ParsedSyntax::{Absent, Present};
 use crate::syntax::decl::{parse_formal_param_pat, parse_parameter_list};
-use crate::syntax::expr::{assign_expr, expr, identifier_name, literal_expression};
+use crate::syntax::expr::{assign_expr, expr, identifier_name, parse_literal_expression};
 use crate::syntax::function::{function_body, ts_parameter_types, ts_return_type};
 use crate::syntax::js_parse_error;
 use crate::{CompletedMarker, ParseRecovery, Parser, ParserState, TokenSet};
@@ -72,7 +72,7 @@ fn object_member(p: &mut Parser) -> ParsedSyntax {
 				&& !p.has_linebreak_before_n(1)
 				&& STARTS_MEMBER_NAME.contains(p.nth(1)) =>
 		{
-			getter_object_member(p)
+			parse_getter_object_member(p)
 		}
 
 		// test object_expr_setter
@@ -181,7 +181,7 @@ fn object_member(p: &mut Parser) -> ParsedSyntax {
 }
 
 /// Parses a getter object member: `{ get a() { return "a"; } }`
-fn getter_object_member(p: &mut Parser) -> ParsedSyntax {
+fn parse_getter_object_member(p: &mut Parser) -> ParsedSyntax {
 	if !p.at(T![ident]) || p.cur_src() != "get" {
 		return Absent;
 	}
@@ -227,7 +227,7 @@ fn setter_object_member(p: &mut Parser) -> ParsedSyntax {
 // let a = {"foo": foo, [6 + 6]: foo, bar: foo, 7: foo}
 pub fn object_prop_name(p: &mut Parser, binding: bool) -> Option<CompletedMarker> {
 	match p.cur() {
-		JS_STRING_LITERAL | JS_NUMBER_LITERAL => literal_expression(p),
+		JS_STRING_LITERAL | JS_NUMBER_LITERAL => parse_literal_expression(p).ok(),
 		T!['['] => computed_member_name(p).ok(),
 		_ if binding => super::pat::binding_identifier(p),
 		_ => identifier_name(p),
